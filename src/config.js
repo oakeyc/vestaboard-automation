@@ -2,6 +2,7 @@ import 'dotenv/config';
 
 export const config = {
   vestaboardApiKey: process.env.VESTABOARD_API_KEY ?? '',
+  vestaboardBaseUrl: process.env.VESTABOARD_BASE_URL || '',
   googleCalendarId: process.env.GOOGLE_CALENDAR_ID || 'primary',
 };
 
@@ -15,4 +16,8 @@ export function requireApiKey() {
     );
   }
   return config.vestaboardApiKey;
+}
+
+export function getBaseUrl() {
+  return config.vestaboardBaseUrl || undefined;
 }

@@ -1,5 +1,5 @@
 import { VestaboardClient } from '../vestaboard/client.js';
-import { requireApiKey } from '../config.js';
+import { getBaseUrl, requireApiKey } from '../config.js';
 import { runCli } from './_runCli.js';
 
 await runCli(async () => {
@@ -7,7 +7,7 @@ await runCli(async () => {
   if (!text) {
     throw new Error('Usage: npm run send -- "your message"');
   }
-  const client = new VestaboardClient({ apiKey: requireApiKey() });
+  const client = new VestaboardClient({ apiKey: requireApiKey(), baseUrl: getBaseUrl() });
   const result = await client.sendText(text);
   console.log(JSON.stringify(result, null, 2));
 });

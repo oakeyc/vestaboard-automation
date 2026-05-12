@@ -1,6 +1,6 @@
 import { getTodayNoteLines } from '../modules/calendar/index.js';
 import { VestaboardClient } from '../vestaboard/client.js';
-import { config, requireApiKey } from '../config.js';
+import { config, getBaseUrl, requireApiKey } from '../config.js';
 import { runCli } from './_runCli.js';
 
 await runCli(async () => {
@@ -18,7 +18,7 @@ await runCli(async () => {
   console.log('+---------------+');
 
   if (shouldSend) {
-    const client = new VestaboardClient({ apiKey: requireApiKey() });
+    const client = new VestaboardClient({ apiKey: requireApiKey(), baseUrl: getBaseUrl() });
     const result = await client.sendText(text);
     console.log('Sent:', JSON.stringify(result));
   } else {

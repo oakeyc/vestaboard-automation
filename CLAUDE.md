@@ -24,7 +24,7 @@ Pinned to **Node 24** via `.nvmrc`; `engines` declares `>=22` as the floor. ESM 
 - `npm run calendar -- --send` — same, but push to the board
 - `npm run server` — long-running scheduler process. Loads every job in `src/jobs/` and runs them on their cron schedules. Ctrl+C for graceful shutdown.
 
-Copy `.env.example` → `.env` and set `VESTABOARD_API_KEY` (from the Vestaboard web app: Settings → Enable Read/Write) and `GOOGLE_CALENDAR_ID` (defaults to `primary`). Job schedules can be overridden via env (`CALENDAR_CRON`, `CALENDAR_TZ`).
+Copy `.env.example` → `.env` and set `VESTABOARD_API_KEY` (from the Vestaboard web app: Settings → Enable Read/Write) and `GOOGLE_CALENDAR_ID` (defaults to `primary`). Optionally set `VESTABOARD_BASE_URL` to override the default API base URL (`https://cloud.vestaboard.com`). Job schedules can be overridden via env (`CALENDAR_CRON`, `CALENDAR_TZ`).
 
 ### Google Calendar setup (first run)
 
