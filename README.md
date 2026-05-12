@@ -1,64 +1,61 @@
 # vestaboard-automation
 
-Personal automation for posting messages to a [Vestaboard](https://www.vestaboard.com/) Note (3 rows x 15 columns) via the [Read/Write API](https://docs.vestaboard.com/docs/read-write-api/endpoints). Built around small, pluggable content modules — the first one reads today's events from Google Calendar and formats them for the board.
+Personal automation that posts messages to a [Vestaboard Note](https://www.vestaboard.com/) (3 rows x 15 columns, not the flagship 6x22) via the [Read/Write API](https://docs.vestaboard.com/docs/read-write-api/endpoints). Runs locally — a handful of CLI commands wired up via system cron. The first content module reads today's Google Calendar events and formats them for the board.
 
-## Prerequisites
+## Requirements
 
-- **Node.js 22+** (the `engines` floor). The repo is pinned to **Node 24** via `.nvmrc`.
-    - `nvm` installed: run `scripts/bootstrap.sh`
-- A Vestaboard Read/Write API key (Vestaboard web app → Settings → Enable Read/Write).
-- For the calendar module: a Google Cloud project with the Calendar API enabled and an OAuth Desktop client.
+- Node 24 (pinned via `.nvmrc`; `engines` declares `>=22` as the floor). `nvm use` picks it up. If you don't have `nvm`, `scripts/bootstrap.sh` installs it.
+- A Vestaboard Read/Write API key — Vestaboard web app → Settings → Enable Read/Write.
+- A Google Cloud project with the **Google Calendar API** enabled and an **OAuth 2.0 Client ID** of type **Desktop app** (only needed for the calendar module).
 
-## Quickstart
+## Setup
 
 ```bash
-nvm use            # picks up Node 24 from .nvmrc
+nvm use
 npm install
 cp .env.example .env
-# edit .env — set VESTABOARD_API_KEY (and GOOGLE_CALENDAR_ID if not 'primary')
-npm start          # read and print the board's current message
+# fill in the values below, then:
+npm start          # sanity check — reads and prints the current board
 ```
 
-## Available scripts
+`.env` keys:
 
-Runtime:
+- `VESTABOARD_API_KEY` — required.
+- `GOOGLE_APP_CLIENT_ID`, `GOOGLE_APP_CLIENT_SECRET` — required for the calendar module. From the OAuth 2.0 Client ID in Google Cloud Console.
+- Optional: `VESTABOARD_BASE_URL` (defaults to `https://cloud.vestaboard.com`), `GOOGLE_CALENDAR_ID` (defaults to `primary`), `GOOGLE_OAUTH_REDIRECT_URI` (defaults to `http://127.0.0.1:53123/oauth/callback`).
+
+### Google OAuth (one-time)
+
+1. Google Cloud Console → create or pick a project → enable the **Google Calendar API**.
+2. Create an OAuth 2.0 Client ID, application type **Desktop app**.
+3. Copy the Client ID and Client Secret into `.env`.
+4. **Publish the OAuth consent screen** (or add yourself as a test user, but note that Testing mode expires refresh tokens every 7 days — you'll have to re-auth weekly). For a personal app, publishing is the painless option.
+5. Run `npm run calendar:auth`. A browser window opens for consent; the refresh token is saved to `token.json` (gitignored). After that the calendar runs unattended.
+
+If the refresh token ever gets revoked or expires, re-run `npm run calendar:auth`.
+
+## Commands
 
 - `npm start` — one-shot: read the board and print the current message.
 - `npm run read` — print the current message as JSON.
 - `npm run send -- "your text here"` — send a plain-text message.
-- `npm run calendar` — dry-run: fetch today's calendar events, format the 3x15 block, print it.
-- `npm run calendar -- --send` — same, but push to the board.
-- `npm run server` — long-running scheduler. Loads every job in `src/jobs/` and runs each on its cron schedule. Ctrl+C for graceful shutdown.
+- `npm run calendar` — dry-run: fetch today's events, print the formatted 3x15 block.
+- `npm run calendar -- --send` — same, but push it to the board.
+- `npm run calendar:auth` — force a fresh Google consent flow (overwrites `token.json`).
 
-Lint / format (Biome):
+Biome:
 
-- `npm run lint` — lint without writing (exits non-zero on issues).
-- `npm run lint:fix` — lint and auto-fix.
-- `npm run format` — format all files in place.
-- `npm run format:check` — check formatting without writing (use in CI).
-- `npm run check` — lint + format check in one pass.
-- `npm run check:fix` — lint + format and apply all safe fixes.
+- `npm run lint` / `npm run lint:fix`
+- `npm run format` / `npm run format:check`
+- `npm run check` — lint + format check
+- `npm run check:fix` — lint + format with safe fixes applied
 
-## Google Calendar OAuth setup
+## Notes worth knowing
 
-The calendar module uses an OAuth Desktop flow (`@google-cloud/local-auth`). First run only:
-
-1. In the Google Cloud Console, create a project and enable the **Google Calendar API**.
-2. Create an OAuth 2.0 Client ID, application type **Desktop app**.
-3. Download the credentials JSON to the repo root as `credentials.json` (gitignored).
-4. Run `npm run calendar`. A browser window opens for consent; the refresh token is written to `token.json` (gitignored). Subsequent runs are unattended.
-
-More detail on architecture and conventions lives in [`CLAUDE.md`](./CLAUDE.md).
-
-## Layout
-
-- `src/vestaboard/` — API client + VBML formatter.
-- `src/cli/` — thin entry points wired into the npm scripts above.
-- `src/modules/` — content sources. `calendar/` is the first; add more (clock, weather, etc.) here.
-- `src/server/` — scheduler, rate-limited sender, entry point for `npm run server`.
-- `src/jobs/` — job definitions registered by the server.
-
-## Notes
-
-- The Vestaboard API rate-limits to roughly 1 message / 15 seconds. The server routes all writes through a `RateLimitedSender` to stay honest.
-- Never commit `.env`, `credentials.json`, or `token.json` — all three are gitignored.
+- The Vestaboard API rate-limits to roughly **1 message per 15 seconds**. Anything sending frequently must space out writes.
+- The board is a **Note (3x15)**, not the flagship **6x22**. The API still speaks in the 6x22 character grid — formatting code targets the Note's usable area.
+- Auth header is `X-Vestaboard-Token`, not `Authorization`.
+- `{ forced: true }` bypasses quiet hours.
+- Blank messages are rejected by the API.
+- The Google OAuth flow uses a loopback HTTP server on port **53123** with a state-token CSRF check. The port is hardcoded in the default redirect URI; if you need to change it, set `GOOGLE_OAUTH_REDIRECT_URI` and add the same URI to your OAuth client's authorized redirect URIs.
+- `.env`, `credentials.json`, and `token.json` are all gitignored. Don't commit them.

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Personal automation that posts messages to a [Vestaboard](https://www.vestaboard.com/) via the [Read/Write API](https://docs.vestaboard.com/docs/read-write-api/endpoints). Designed to run locally (e.g., from cron or a long-running Node process). Future work adds content modules — Google Calendar, time/date, etc. — that feed the board.
+Personal automation that posts messages to a [Vestaboard](https://www.vestaboard.com/) via the [Read/Write API](https://docs.vestaboard.com/docs/read-write-api/endpoints). Designed to run locally — CLI commands invoked from system cron. Future work adds content modules — Google Calendar, time/date, etc. — that feed the board.
 
 ## Hardware
 
@@ -23,9 +23,8 @@ Pinned to **Node 24** via `.nvmrc`; `engines` declares `>=22` as the floor. ESM 
 - `npm run calendar` — dry-run: fetch today's Google Calendar events and print the formatted 3×15 block
 - `npm run calendar -- --send` — same, but push to the board
 - `npm run calendar:auth` — force a fresh Google consent flow (overwrites `token.json`). Use after revoking access or when the refresh token has expired.
-- `npm run server` — long-running scheduler process. Loads every job in `src/jobs/` and runs them on their cron schedules. Ctrl+C for graceful shutdown.
 
-Copy `.env.example` → `.env` and set `VESTABOARD_API_KEY` (from the Vestaboard web app: Settings → Enable Read/Write) and `GOOGLE_CALENDAR_ID` (defaults to `primary`). Optionally set `VESTABOARD_BASE_URL` to override the default API base URL (`https://cloud.vestaboard.com`). Job schedules can be overridden via env (`CALENDAR_CRON`, `CALENDAR_TZ`).
+Copy `.env.example` → `.env` and set `VESTABOARD_API_KEY` (from the Vestaboard web app: Settings → Enable Read/Write) and `GOOGLE_CALENDAR_ID` (defaults to `primary`). Optionally set `VESTABOARD_BASE_URL` to override the default API base URL (`https://cloud.vestaboard.com`).
 
 Google OAuth credentials also come from `.env`: `GOOGLE_APP_CLIENT_ID` and `GOOGLE_APP_CLIENT_SECRET` (from the OAuth 2.0 Client ID you create in Google Cloud Console). Optionally override `GOOGLE_OAUTH_REDIRECT_URI` (defaults to `http://127.0.0.1:53123/oauth/callback`).
 
@@ -49,18 +48,15 @@ Google OAuth credentials also come from `.env`: `GOOGLE_APP_CLIENT_ID` and `GOOG
   - `format.js` — converts events into a 3×15 array of lines. Sanitizes to Vestaboard-supported chars (uppercase A-Z, 0-9, basic punctuation; `&` → `AND`). Compact times like `9A`, `10:30A`, `3P`. Overflow collapses to `+N MORE`. Empty → `NO EVENTS TODAY`.
   - `index.js` — `getTodayNoteLines({ calendarId })` orchestrator.
 - `src/modules/` — placeholder for future content-source modules (clock, weather, etc.). Each module should expose a function that returns either a string (let the API/VBML format it) or, for precise placement, an array of character codes.
-- `src/server/` — long-running scheduler process.
-  - `index.js` — entry point. Builds a single `VestaboardClient`, wraps it in a `RateLimitedSender`, instantiates each job via its factory, registers them with the `Scheduler`, handles SIGINT/SIGTERM.
-  - `scheduler.js` — `node-cron` v4 wrapper. Validates cron expressions, prevents overlapping runs of the same job, logs start/ok/fail.
-  - `sender.js` — `RateLimitedSender` serializes all board writes through a promise queue with a configurable minimum interval (default **15s**) — this is the chokepoint that keeps every job honest about Vestaboard's rate limit.
-- `src/jobs/` — job definitions. Each file exports a factory `({ sender }) => { name, schedule, timezone?, run }`. `src/jobs/index.js` aggregates them into `jobFactories`. To add a new scheduled task, write a file here and append it to the array.
+
+Scheduling lives in system cron (`crontab -e`), not in-process. Anything sending frequently must space writes manually to respect the API rate limit.
 
 ## API notes (worth remembering)
 
 - Auth: `X-Vestaboard-Token` header — **not** `Authorization`.
 - Board layout is **6 rows × 22 cols** of character codes. `0` = blank. Sending `{ text }` lets the server lay it out; sending `{ characters }` gives full control.
 - `{ forced: true }` bypasses quiet hours.
-- The API rate-limits to roughly **1 message per 15 seconds**. Any scheduler/loop that sends frequently must throttle.
+- The API rate-limits to roughly **1 message per 15 seconds**. Anything that sends frequently must throttle.
 - Blank messages are rejected.
 - Transitions: `classic | wave | drift | curtain`, speeds: `gentle | fast`.
 

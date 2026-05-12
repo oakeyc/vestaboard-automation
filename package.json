@@ -13,7 +13,6 @@
     "send": "node src/cli/send.js",
     "calendar": "node src/cli/calendar.js",
     "calendar:auth": "node src/cli/calendar-auth.js",
-    "server": "node src/server/index.js",
     "lint": "biome lint .",
     "lint:fix": "biome lint --write .",
     "format": "biome format --write .",
@@ -23,8 +22,7 @@
   },
   "dependencies": {
     "dotenv": "^16.4.5",
-    "googleapis": "^171.4.0",
-    "node-cron": "^4.2.1"
+    "googleapis": "^171.4.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.15"
