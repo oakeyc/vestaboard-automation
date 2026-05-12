@@ -5,6 +5,7 @@ Personal automation for posting messages to a [Vestaboard](https://www.vestaboar
 ## Prerequisites
 
 - **Node.js 22+** (the `engines` floor). The repo is pinned to **Node 24** via `.nvmrc`.
+    - `nvm` installed: run `scripts/bootstrap.sh`
 - A Vestaboard Read/Write API key (Vestaboard web app → Settings → Enable Read/Write).
 - For the calendar module: a Google Cloud project with the Calendar API enabled and an OAuth Desktop client.
 
