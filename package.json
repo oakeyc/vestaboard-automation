@@ -12,6 +12,7 @@
     "read": "node src/cli/read.js",
     "send": "node src/cli/send.js",
     "calendar": "node src/cli/calendar.js",
+    "calendar:auth": "node src/cli/calendar-auth.js",
     "server": "node src/server/index.js",
     "lint": "biome lint .",
     "lint:fix": "biome lint --write .",
@@ -21,7 +22,6 @@
     "check:fix": "biome check --write ."
   },
   "dependencies": {
-    "@google-cloud/local-auth": "^3.0.1",
     "dotenv": "^16.4.5",
     "googleapis": "^171.4.0",
     "node-cron": "^4.2.1"

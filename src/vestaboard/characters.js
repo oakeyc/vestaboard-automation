@@ -88,11 +88,7 @@ export function charactersToText(input, { cols } = {}) {
   const layout = normalizeLayout(input);
   if (!Array.isArray(layout)) return '';
 
-  const rows = Array.isArray(layout[0])
-    ? layout
-    : cols
-      ? chunk(layout, cols)
-      : [layout];
+  const rows = Array.isArray(layout[0]) ? layout : cols ? chunk(layout, cols) : [layout];
 
   return rows.map((row) => row.map(codeToChar).join('')).join('\n');
 }
