@@ -39,6 +39,7 @@ If the refresh token ever gets revoked or expires, re-run `npm run calendar:auth
 - `npm start` — one-shot: read the board and print the current message.
 - `npm run read` — print the current message as JSON.
 - `npm run send -- "your text here"` — send a plain-text message.
+- `npm run calendar:auth` — gets a token for google workspaces
 - `npm run calendar` — dry-run: fetch today's events, print the formatted 3x15 block.
 - `npm run calendar -- --send` — same, but push it to the board.
 - `npm run calendar:auth` — force a fresh Google consent flow (overwrites `token.json`).
