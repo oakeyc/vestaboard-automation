@@ -4,7 +4,7 @@ import { VestaboardClient } from '../vestaboard/client.js';
 import { config, getBaseUrl, requireApiKey } from '../config.js';
 import { runCli } from './_runCli.js';
 
-const PAGE_DELAY_MS = 5_000;
+const PAGE_DELAY_MS = 20_000;
 
 function chunk(arr, size) {
   const out = [];
